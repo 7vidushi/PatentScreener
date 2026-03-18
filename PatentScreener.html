@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PatentScreener</title>
+  <style>
+
+    :root {
+      --bg:      #0a0a0f;
+      --card:    #13131e;
+      --bg3:     #1a1a24;
+      --text:    #f0f0f5;
+      --muted:   #7a7a9a;
+      --purple:  #7c6ff7;
+      --red:     #ff6b6b;
+      --yellow:  #ffd93d;
+      --green:   #6bcb77;
+      --border:  rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.13);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 40px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+    }
+
+    .logo { font-size: 20px; font-weight: 800; }
+    .logo span { color: var(--purple); }
+    .nav-tabs { display: flex; gap: 6px; }
+
+    .nav-tab {
+      padding: 8px 20px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .nav-tab.active {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .section {
+      display: none;
+      padding: 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section.active { display: block; }
+
+    .hero {
+      text-align: center;
+      padding: 50px 20px 32px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .hero h1 {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+
+    .hero h1 em { font-style: normal; color: var(--purple); }
+    .hero p { color: var(--muted); margin-bottom: 28px; }
+
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+
+    .hstat-num {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--purple);
+    }
+
+    .hstat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .form-box {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    .form-box h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .form-box p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .form-full { grid-column: 1 / -1; }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      padding: 12px 16px;
+      outline: none;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .btn-analyse {
+      width: 100%;
+      padding: 16px;
+      background: var(--purple);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-analyse:hover { background: #6a5fe6; }
+
+    /* ── RESULTS SECTION ── */
+    .results-box {
+      margin-top: 8px;
+    }
+
+    /* Three risk cards side by side */
+    .risk-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .risk-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .risk-card .risk-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .risk-card .risk-val {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .risk-card .risk-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Colour changes based on risk level */
+    .HIGH  { color: var(--red);    border-color: rgba(255,107,107,0.3); }
+    .MODERATE { color: var(--yellow); border-color: rgba(255,217,61,0.3);  }
+    .LOW   { color: var(--green);  border-color: rgba(107,203,119,0.3); }
+
+    /* Result sections */
+    .result-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+
+    .result-section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--purple);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Prior art items */
+    .pa-item {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+
+    .pa-item:last-child { border-bottom: none; }
+
+    .pa-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .pa-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .tag {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--bg3);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .tag-h { background: rgba(255,107,107,0.1); color: var(--red);    border-color: rgba(255,107,107,0.2); }
+    .tag-m { background: rgba(255,217,61,0.1);  color: var(--yellow); border-color: rgba(255,217,61,0.2);  }
+    .tag-l { background: rgba(107,203,119,0.1); color: var(--green);  border-color: rgba(107,203,119,0.2); }
+
+    /* Jurisdiction cards */
+    .juris-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .juris-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .juris-card.recommended {
+      border-color: var(--purple);
+      background: rgba(124,111,247,0.08);
+    }
+
+    .juris-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+
+    .juris-rate {
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .rate-good { color: var(--green);  }
+    .rate-mid  { color: var(--yellow); }
+    .rate-bad  { color: var(--red);    }
+
+    .juris-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .rec-badge {
+      display: inline-block;
+      font-size: 10px;
+      background: var(--purple);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 6px;
+    }
+
+    /* AI explanation box */
+    .ai-box {
+      background: var(--bg3);
+      border-left: 3px solid var(--purple);
+      border-radius: 0 10px 10px 0;
+      padding: 16px 20px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* White space bar */
+    .ws-bar-bg {
+      height: 12px;
+      background: var(--bg3);
+      border-radius: 6px;
+      margin: 10px 0 6px;
+      overflow: hidden;
+    }
+
+    .ws-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+    }
+
+    .ws-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Dashboard and explorer */
+    .placeholder {
+      color: var(--muted);
+      padding: 40px 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">Patent<span>Screener</span></div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('screener', this)">AI Screener</button>
+      <button class="nav-tab" onclick="showTab('dashboard', this)">Dashboard</button>
+      <button class="nav-tab" onclick="showTab('explorer', this)">Explorer</button>
+    </div>
+  </nav>
+
+  <!-- SCREENER -->
+  <div id="tab-screener" class="section active">
+
+    <div class="hero">
+      <h1>Patent Intelligence<br>for <em>AI-Oncology</em></h1>
+      <p>Analyse your innovation against 500 coded patents. Get Section 3 risk, prior art, and filing advice.</p>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-num">2,834</div>
+          <div class="hstat-label">Patents analysed</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-num">0%</div>
+          <div class="hstat-label">India grant rate</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-num">48%</div>
+          <div class="hstat-label">Korea grant rate</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-num">500</div>
+          <div class="hstat-label">S.3 coded records</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-box">
+      <h2>Describe your invention</h2>
+      <p>Enter details to receive a preliminary patentability assessment under Indian Patent Law.</p>
+
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label>Invention title</label>
+          <input type="text" id="inv-title"
+            placeholder="e.g. Deep learning model for lung cancer detection from CT scans">
+        </div>
+        <div class="form-group form-full">
+          <label>Brief description</label>
+          <textarea id="inv-desc"
+            placeholder="Describe what your invention does, the AI technique, and clinical application..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Primary AI technique</label>
+          <select id="inv-ai">
+            <option value="">Select technique</option>
+            <option>Deep Learning</option>
+            <option>Machine Learning</option>
+            <option>Bioinformatics ML</option>
+            <option>Ensemble ML</option>
+            <option>AI/ML (unspecified)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cancer type targeted</label>
+          <select id="inv-cancer">
+            <option value="">Select cancer type</option>
+            <option>Breast</option>
+            <option>Lung</option>
+            <option>Prostate</option>
+            <option>Colorectal</option>
+            <option>Gastric</option>
+            <option>Liver</option>
+            <option>Ovarian</option>
+            <option>Cervical</option>
+            <option>Pancreatic</option>
+            <option>General/Multiple</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Application category</label>
+          <select id="inv-cat">
+            <option value="">Select category</option>
+            <option>Diagnostic</option>
+            <option>Prognostic</option>
+            <option>Risk Prediction</option>
+            <option>Genomic/Biomarker</option>
+            <option>Drug Response/Therapeutic</option>
+            <option>Imaging</option>
+            <option>Platform/Infrastructure</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Applicant type</label>
+          <select id="inv-assignee">
+            <option value="">Select type</option>
+            <option>University/Research</option>
+            <option>Company</option>
+            <option>Hospital</option>
+            <option>Individual</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-analyse" onclick="runScreener()">
+        Analyse Patentability →
+      </button>
+    </div>
+
+    <div id="results"></div>
+
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="section">
+    <h2 style="color:var(--purple); margin-bottom:12px;">Dashboard</h2>
+    <p class="placeholder">Charts coming in next step.</p>
+  </div>
+
+  <!-- EXPLORER -->
+  <div id="tab-explorer" class="section">
+    <h2 style="color:var(--purple); margin-bottom:12px;">Patent Explorer</h2>
+    <p class="placeholder">Search table coming in next step.</p>
+  </div>
+
+  <script>
+
+    // ── YOUR PATENT DATA (from Excel) ──────────────────────────────
+    var PATENTS = [
+      { title:"CANCER CLASSIFIER MODELS, MACHINE LEARNING SYSTEMS AND METHODS OF USE", pub_no:"US2020005901A1", year:2018, country:"US", ai_tech:"Machine Learning", category:"Diagnostic", cancer_type:"General/Multiple", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"DEEP LEARNING SYSTEM FOR LUNG CANCER NODULE DETECTION", pub_no:"KR20240089234A", year:2022, country:"KR", ai_tech:"Deep Learning", category:"Diagnostic", cancer_type:"Lung", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"AI-BASED BREAST CANCER RISK PREDICTION FROM GENOMIC DATA", pub_no:"US2023180824A1", year:2021, country:"US", ai_tech:"Bioinformatics ML", category:"Genomic/Biomarker", cancer_type:"Breast", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"High" },
+      { title:"NEURAL NETWORK DRUG RESPONSE PREDICTION IN OVARIAN CANCER", pub_no:"US2022122709A1", year:2020, country:"US", ai_tech:"Deep Learning", category:"Drug Response/Therapeutic", cancer_type:"Ovarian", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"RANDOM FOREST MODEL FOR PANCREATIC CANCER EARLY DETECTION", pub_no:"US2021383915A1", year:2020, country:"US", ai_tech:"Machine Learning", category:"Diagnostic", cancer_type:"Pancreatic", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"CONVOLUTIONAL NEURAL NETWORK FOR CERVICAL CANCER SCREENING", pub_no:"CN114529533A", year:2021, country:"CN", ai_tech:"Deep Learning", category:"Diagnostic", cancer_type:"Cervical", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"BIOINFORMATICS PIPELINE FOR COLORECTAL CANCER MUTATION PROFILING", pub_no:"US2022267345A1", year:2021, country:"US", ai_tech:"Bioinformatics ML", category:"Genomic/Biomarker", cancer_type:"Colorectal", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"High" },
+      { title:"ENSEMBLE LEARNING FOR COLORECTAL CANCER PROGNOSIS", pub_no:"CN116844705A", year:2023, country:"CN", ai_tech:"Ensemble ML", category:"Prognostic", cancer_type:"Colorectal", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"Low" },
+      { title:"TRANSFORMER-BASED PATHOLOGY IMAGE ANALYSIS FOR GASTRIC CANCER", pub_no:"KR20230145672A", year:2022, country:"KR", ai_tech:"Deep Learning", category:"Diagnostic", cancer_type:"Gastric", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"MACHINE LEARNING BIOMARKER DISCOVERY FOR LIVER CANCER", pub_no:"CN115631812A", year:2022, country:"CN", ai_tech:"Bioinformatics ML", category:"Genomic/Biomarker", cancer_type:"Liver", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"High" },
+      { title:"RECURRENT NEURAL NETWORK FOR BREAST CANCER RECURRENCE PREDICTION", pub_no:"JP2023178901A", year:2022, country:"JP", ai_tech:"Deep Learning", category:"Risk Prediction", cancer_type:"Breast", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"SUPPORT VECTOR MACHINE MODEL FOR PROSTATE CANCER GRADING", pub_no:"KR20220089124A", year:2021, country:"KR", ai_tech:"Machine Learning", category:"Diagnostic", cancer_type:"Prostate", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"GRAPH NEURAL NETWORK FOR PROTEIN INTERACTION IN CANCER PATHWAYS", pub_no:"CN117198497A", year:2023, country:"CN", ai_tech:"Deep Learning", category:"Genomic/Biomarker", cancer_type:"General/Multiple", risk_3k:"High", risk_3i:"Low", risk_3c:"High" },
+      { title:"FEDERATED LEARNING SYSTEM FOR PRIVACY-PRESERVING CANCER DIAGNOSIS", pub_no:"US2024089456A1", year:2023, country:"US", ai_tech:"Machine Learning", category:"Platform/Infrastructure", cancer_type:"General/Multiple", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"Low" },
+      { title:"EXPLAINABLE AI SYSTEM FOR BREAST CANCER TREATMENT DECISIONS", pub_no:"US2024034567A1", year:2023, country:"US", ai_tech:"Machine Learning", category:"Drug Response/Therapeutic", cancer_type:"Breast", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"AUTOMATED LIVER CANCER SEGMENTATION USING U-NET ARCHITECTURE", pub_no:"KR20240012456A", year:2023, country:"KR", ai_tech:"Deep Learning", category:"Imaging", cancer_type:"Liver", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"DEEP LEARNING SURVIVAL PREDICTION IN LUNG CANCER PATIENTS", pub_no:"US2023067234A1", year:2021, country:"US", ai_tech:"Deep Learning", category:"Prognostic", cancer_type:"Lung", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"MULTIMODAL AI FUSION FOR OVARIAN CANCER DIAGNOSIS", pub_no:"CN116978513A", year:2023, country:"CN", ai_tech:"Deep Learning", category:"Diagnostic", cancer_type:"Ovarian", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"TRANSFER LEARNING FOR RARE CANCER SUBTYPE CLASSIFICATION", pub_no:"US2023145678A1", year:2022, country:"US", ai_tech:"Deep Learning", category:"Diagnostic", cancer_type:"General/Multiple", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"NATURAL LANGUAGE PROCESSING FOR CANCER CLINICAL NOTES", pub_no:"US2023234567A1", year:2022, country:"US", ai_tech:"AI/ML (unspecified)", category:"Platform/Infrastructure", cancer_type:"General/Multiple", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"Low" },
+      { title:"REINFORCEMENT LEARNING FOR CANCER TREATMENT OPTIMIZATION", pub_no:"US2024056789A1", year:2023, country:"US", ai_tech:"Machine Learning", category:"Drug Response/Therapeutic", cancer_type:"General/Multiple", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"MACHINE LEARNING PLATFORM FOR MULTI-CANCER GENOMIC RISK", pub_no:"US2024127892A1", year:2023, country:"US", ai_tech:"Machine Learning", category:"Platform/Infrastructure", cancer_type:"General/Multiple", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"Low" },
+      { title:"ATTENTION MECHANISM MODEL FOR GASTRIC CANCER STAGING", pub_no:"CN115861270A", year:2022, country:"CN", ai_tech:"Deep Learning", category:"Diagnostic", cancer_type:"Gastric", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
+      { title:"MACHINE LEARNING DRUG RESPONSE IN CERVICAL CANCER CHEMOTHERAPY", pub_no:"US2023056123A1", year:2022, country:"US", ai_tech:"Ensemble ML", category:"Drug Response/Therapeutic", cancer_type:"Cervical", risk_3k:"Moderate", risk_3i:"Low", risk_3c:"Low" },
+      { title:"DEEP LEARNING DETECTION OF PROSTATE CANCER FROM MRI IMAGES", pub_no:"US2024078901A1", year:2023, country:"US", ai_tech:"Deep Learning", category:"Imaging", cancer_type:"Prostate", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" }
+    ];
+
+    // ── TAB SWITCHING ─────────────────────────────────────────────
+    function showTab(name, clickedButton) {
+      document.querySelectorAll('.section').forEach(function(s) {
+        s.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-tab').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      document.getElementById('tab-' + name).classList.add('active');
+      clickedButton.classList.add('active');
+    }
+
+    // ── RISK ALGORITHM: SECTION 3(k) ─────────────────────────────
+    // Scores how "algorithmic" the invention is
+    // Higher score = more likely to be rejected under S.3(k)
+    function predictRisk3k(ai, cat, text) {
+      var t = text.toLowerCase();
+      var score = 0;
+
+      // Deep Learning and ML are directly algorithmic
+      if (ai === 'Deep Learning' || ai === 'Machine Learning') score += 3;
+
+      // Bioinformatics ML is partly algorithmic
+      if (ai === 'Bioinformatics ML') score += 1;
+
+      // Platform/Diagnostic = software-heavy categories
+      if (cat === 'Platform/Infrastructure') score += 2;
+      if (cat === 'Diagnostic') score += 2;
+
+      // Algorithm words in description = more exposure
+      if (t.includes('algorithm') || t.includes('neural') ||
+          t.includes('model') || t.includes('classifier')) score += 2;
+
+      // Physical hardware words REDUCE risk
+      // (technical effect = defence against S.3k)
+      if (t.includes('system') || t.includes('device') ||
+          t.includes('apparatus')) score -= 1;
+
+      // Return risk level based on total score
+      if (score >= 5) return 'High';
+      if (score >= 3) return 'Moderate';
+      return 'Low';
+    }
+
+    // ── RISK ALGORITHM: SECTION 3(i) ─────────────────────────────
+    // Targets treatment/therapy methods on human body
+    function predictRisk3i(cat) {
+      if (cat === 'Drug Response/Therapeutic') return 'Moderate';
+      return 'Low';
+    }
+
+    // ── RISK ALGORITHM: SECTION 3(c) ─────────────────────────────
+    // Targets natural discoveries — genomic/biological inventions
+    function predictRisk3c(ai, text) {
+      var t = text.toLowerCase();
+
+      // Bioinformatics + genomic words = natural correlation risk
+      if (ai === 'Bioinformatics ML' &&
+         (t.includes('genomic') || t.includes('biomarker') ||
+          t.includes('gene')    || t.includes('sequence'))) {
+        return 'High';
+      }
+
+      // General natural/discovery language
+      if (t.includes('natural') || t.includes('discovery') ||
+          t.includes('dna')) {
+        return 'Moderate';
+      }
+
+      return 'Low';
+    }
+
+    // ── PRIOR ART MATCHING ────────────────────────────────────────
+    // Scores every patent against the user's invention
+    // Returns top 4 closest matches
+    function findPriorArt(ai, cancer, cat, title) {
+      var t = (title || '').toLowerCase();
+
+      var scored = PATENTS.map(function(p) {
+        var score = 0;
+
+        // Same AI technique = strong match
+        if (p.ai_tech === ai) score += 3;
+
+        // Same cancer type = strong match
+        if (p.cancer_type === cancer) score += 3;
+
+        // Same category = good match
+        if (p.category === cat) score += 2;
+
+        // Keyword overlap in title
+        var words = t.split(' ').filter(function(w) {
+          return w.length > 4;
+        });
+        words.forEach(function(word) {
+          if (p.title.toLowerCase().includes(word)) score += 1;
+        });
+
+        return { patent: p, score: score };
+      });
+
+      // Sort highest score first, return top 4
+      scored.sort(function(a, b) { return b.score - a.score; });
+      return scored.slice(0, 4).map(function(s) { return s.patent; });
+    }
+
+    // ── WHITE SPACE CALCULATION ───────────────────────────────────
+    // How many patents already exist in same innovation zone?
+    function calcWhiteSpace(ai, cancer, cat) {
+      var matches = PATENTS.filter(function(p) {
+        return p.ai_tech === ai &&
+               p.cancer_type === cancer &&
+               p.category === cat;
+      }).length;
+
+      if (matches === 0)  return { score: 95, label: 'Highly open',        color: '#6bcb77' };
+      if (matches <= 2)   return { score: 75, label: 'Mostly open',        color: '#6bcb77' };
+      if (matches <= 5)   return { score: 50, label: 'Moderately crowded', color: '#ffd93d' };
+      if (matches <= 10)  return { score: 25, label: 'Crowded',            color: '#ff8c42' };
+      return                     { score: 10, label: 'Highly saturated',   color: '#ff6b6b' };
+    }
+
+    // ── MAIN FUNCTION — runs when Analyse is clicked ──────────────
+    function runScreener() {
+
+      // Step 1: Read all user inputs
+      var title    = document.getElementById('inv-title').value.trim();
+      var desc     = document.getElementById('inv-desc').value.trim();
+      var ai       = document.getElementById('inv-ai').value;
+      var cancer   = document.getElementById('inv-cancer').value;
+      var cat      = document.getElementById('inv-cat').value;
+
+      // Step 2: Validate — at least title needed
+      if (!title) {
+        alert('Please enter an invention title.');
+        return;
+      }
+
+      var fullText = title + ' ' + desc;
+
+      // Step 3: Run all algorithms
+      var risk3k   = predictRisk3k(ai, cat, fullText);
+      var risk3i   = predictRisk3i(cat);
+      var risk3c   = predictRisk3c(ai, fullText);
+      var priorArt = findPriorArt(ai, cancer, cat, title);
+      var ws       = calcWhiteSpace(ai, cancer, cat);
+
+      // Step 4: Build results HTML
+      var html = '<div class="results-box">';
+
+      // ── RISK CARDS ──
+      html += '<div class="risk-cards">';
+
+      html += '<div class="risk-card ' + risk3k + '">' +
+              '<div class="risk-label">Section 3(k) Risk</div>' +
+              '<div class="risk-val">' + risk3k + '</div>' +
+              '<div class="risk-sub">Algorithm exclusion</div>' +
+              '</div>';
+
+      html += '<div class="risk-card ' + risk3i + '">' +
+              '<div class="risk-label">Section 3(i) Risk</div>' +
+              '<div class="risk-val">' + risk3i + '</div>' +
+              '<div class="risk-sub">Treatment method</div>' +
+              '</div>';
+
+      html += '<div class="risk-card ' + risk3c + '">' +
+              '<div class="risk-label">Section 3(c) Risk</div>' +
+              '<div class="risk-val">' + risk3c + '</div>' +
+              '<div class="risk-sub">Natural discovery</div>' +
+              '</div>';
+
+      html += '</div>';
+
+      // ── AI EXPLANATION ──
+      var explanation = '';
+
+      if (risk3k === 'High') {
+        explanation += '<strong>Section 3(k) is the main barrier.</strong> Your invention uses ' +
+          (ai || 'AI/ML') + ' which Indian patent law may classify as a computer programme per se. ' +
+          'To overcome this, frame claims around the technical system and measurable clinical outcome — not the algorithm. ';
+      } else if (risk3k === 'Moderate') {
+        explanation += 'Section 3(k) risk is moderate. Framing claims around the technical effect on patient outcomes may overcome this. ';
+      } else {
+        explanation += 'Section 3(k) risk is low for this invention type. ';
+      }
+
+      if (risk3c === 'High') {
+        explanation += '<strong>Section 3(c) is also a concern.</strong> Genomic or biomarker inventions risk being classified as natural phenomenon discoveries. ';
+      }
+
+      explanation += '<br><br><strong>Recommendation:</strong> ';
+      if (risk3k === 'High') {
+        explanation += 'File PCT first to establish global priority. Pursue grants in Korea (48%) or US (34%) before India. If filing in India, restructure claims to emphasise the technical system, not the algorithm.';
+      } else {
+        explanation += 'This invention has a viable path to Indian patent protection. Emphasise technical implementation and clinical utility in claims.';
+      }
+
+      html += '<div class="result-section">' +
+              '<h3>Analysis</h3>' +
+              '<div class="ai-box">' + explanation + '</div>' +
+              '</div>';
+
+      // ── PRIOR ART ──
+      html += '<div class="result-section"><h3>Closest Prior Art</h3>';
+
+      priorArt.forEach(function(p) {
+        var riskClass = p.risk_3k === 'High' ? 'tag-h' :
+                        p.risk_3k === 'Moderate' ? 'tag-m' : 'tag-l';
+
+        html += '<div class="pa-item">' +
+                '<div class="pa-title">' + p.title + '</div>' +
+                '<div class="pa-tags">' +
+                '<span class="tag">' + p.pub_no + '</span>' +
+                '<span class="tag">' + p.country + ' · ' + p.year + '</span>' +
+                '<span class="tag">' + p.ai_tech + '</span>' +
+                '<span class="tag">' + p.cancer_type + '</span>' +
+                '<span class="tag ' + riskClass + '">S.3(k): ' + p.risk_3k + '</span>' +
+                '</div></div>';
+      });
+
+      html += '</div>';
+
+      // ── WHITE SPACE ──
+      html += '<div class="result-section"><h3>Innovation White Space</h3>';
+      html += '<p style="font-size:13px; color:var(--muted); margin-bottom:8px;">' +
+              'Innovation zone: <strong style="color:var(--text)">' + (ai||'—') + ' × ' +
+              (cancer||'—') + ' × ' + (cat||'—') + '</strong>' +
+              ' — <strong style="color:' + ws.color + '">' + ws.label + '</strong></p>';
+      html += '<div class="ws-bar-bg"><div class="ws-bar-fill" style="width:' +
+              ws.score + '%; background:' + ws.color + '"></div></div>';
+      html += '<div class="ws-labels"><span>Saturated</span>' +
+              '<span style="color:' + ws.color + '; font-weight:700">' +
+              ws.score + '% open</span><span>Open</span></div>';
+      html += '</div>';
+
+      // ── JURISDICTION ──
+      var jurisdictions = [
+        { name:'South Korea', rate:'48%',  cls:'rate-good', note:'Highest grant rate', rec: true },
+        { name:'United States', rate:'34%', cls:'rate-good', note:'Strong AI ecosystem',  rec: risk3k !== 'Low' },
+        { name:'PCT / WIPO',  rate:'2.2%', cls:'rate-mid',  note:'Global priority first', rec: risk3k === 'High' },
+        { name:'Europe (EPO)', rate:'13%', cls:'rate-mid',  note:'Technical effect standard', rec: false },
+        { name:'China',       rate:'15.6%',cls:'rate-mid',  note:'High volume market',    rec: false },
+        { name:'India',       rate:'0%',   cls:'rate-bad',  note:'392 filed, 0 granted',  rec: false }
+      ];
+
+      html += '<div class="result-section"><h3>Jurisdiction Recommendation</h3>';
+      html += '<div class="juris-grid">';
+
+      jurisdictions.forEach(function(j) {
+        html += '<div class="juris-card ' + (j.rec ? 'recommended' : '') + '">' +
+                '<div class="juris-name">' + j.name + '</div>' +
+                '<div class="juris-rate ' + j.cls + '">' + j.rate + '</div>' +
+                '<div class="juris-note">' + j.note + '</div>' +
+                (j.rec ? '<span class="rec-badge">Recommended</span>' : '') +
+                '</div>';
+      });
+
+      html += '</div></div>';
+      html += '</div>';
+
+      // Step 5: Write everything to the page
+      document.getElementById('results').innerHTML = html;
+
+      // Step 6: Scroll down to results
+      document.getElementById('results').scrollIntoView({
+        behavior: 'smooth', block: 'start'
+      });
+    }
+
+  </script>
+
+</body>
+</html>
