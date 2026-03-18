@@ -72,11 +72,11 @@ No installation needed. Works on mobile and desktop.
 
 | File | Description |
 |------|-------------|
-| PatentScreener.html | Online version — loads Chart.js from CDN |
-| PatentScreener_Offline.html | Offline version — works without internet |
-| README.md | This file |
+| PatentScreener.html | Online web tool — opens in any browser |
+| PatentScreener_Offline.html | Offline version — no internet needed |
+| PatentScreener_Analysis.ipynb | Python analysis notebook — 9 charts from 2,834 patents |
+| README.md | Project description |
 
----
 
 ## Technology
 
