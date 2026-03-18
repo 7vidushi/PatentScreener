@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PatentScreener</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
 
     :root {
@@ -15,6 +17,7 @@
       --red:     #ff6b6b;
       --yellow:  #ffd93d;
       --green:   #6bcb77;
+      --teal:    #4ecdc4;
       --border:  rgba(255,255,255,0.08);
       --border2: rgba(255,255,255,0.13);
     }
@@ -25,9 +28,12 @@
       background: var(--bg);
       color: var(--text);
       font-family: Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
       min-height: 100vh;
     }
 
+    /* NAV */
     nav {
       display: flex;
       justify-content: space-between;
@@ -37,6 +43,7 @@
       position: sticky;
       top: 0;
       background: var(--bg);
+      z-index: 100;
     }
 
     .logo { font-size: 20px; font-weight: 800; }
@@ -58,6 +65,9 @@
       color: var(--text);
     }
 
+    .nav-tab:hover { color: var(--text); }
+
+    /* SECTIONS */
     .section {
       display: none;
       padding: 40px;
@@ -67,6 +77,7 @@
 
     .section.active { display: block; }
 
+    /* HERO */
     .hero {
       text-align: center;
       padding: 50px 20px 32px;
@@ -89,6 +100,7 @@
       gap: 32px;
       justify-content: center;
       margin-bottom: 40px;
+      flex-wrap: wrap;
     }
 
     .hstat-num {
@@ -103,6 +115,7 @@
       text-transform: uppercase;
     }
 
+    /* FORM */
     .form-box {
       background: var(--card);
       border: 1px solid var(--border2);
@@ -117,7 +130,7 @@
       margin-bottom: 6px;
     }
 
-    .form-box p {
+    .form-box > p {
       color: var(--muted);
       font-size: 13px;
       margin-bottom: 24px;
@@ -175,12 +188,7 @@
 
     .btn-analyse:hover { background: #6a5fe6; }
 
-    /* ── RESULTS SECTION ── */
-    .results-box {
-      margin-top: 8px;
-    }
-
-    /* Three risk cards side by side */
+    /* RESULTS */
     .risk-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -215,12 +223,10 @@
       margin-top: 6px;
     }
 
-    /* Colour changes based on risk level */
-    .HIGH  { color: var(--red);    border-color: rgba(255,107,107,0.3); }
+    .HIGH     { color: var(--red);    border-color: rgba(255,107,107,0.3); }
     .MODERATE { color: var(--yellow); border-color: rgba(255,217,61,0.3);  }
-    .LOW   { color: var(--green);  border-color: rgba(107,203,119,0.3); }
+    .LOW      { color: var(--green);  border-color: rgba(107,203,119,0.3); }
 
-    /* Result sections */
     .result-section {
       background: var(--card);
       border: 1px solid var(--border);
@@ -230,7 +236,7 @@
     }
 
     .result-section h3 {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--purple);
       margin-bottom: 16px;
@@ -238,7 +244,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* Prior art items */
     .pa-item {
       border-bottom: 1px solid var(--border);
       padding: 12px 0;
@@ -267,7 +272,6 @@
     .tag-m { background: rgba(255,217,61,0.1);  color: var(--yellow); border-color: rgba(255,217,61,0.2);  }
     .tag-l { background: rgba(107,203,119,0.1); color: var(--green);  border-color: rgba(107,203,119,0.2); }
 
-    /* Jurisdiction cards */
     .juris-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -288,21 +292,11 @@
     }
 
     .juris-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-
-    .juris-rate {
-      font-size: 22px;
-      font-weight: 800;
-    }
-
+    .juris-rate { font-size: 22px; font-weight: 800; }
     .rate-good { color: var(--green);  }
     .rate-mid  { color: var(--yellow); }
     .rate-bad  { color: var(--red);    }
-
-    .juris-note {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
+    .juris-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
     .rec-badge {
       display: inline-block;
@@ -314,7 +308,6 @@
       margin-top: 6px;
     }
 
-    /* AI explanation box */
     .ai-box {
       background: var(--bg3);
       border-left: 3px solid var(--purple);
@@ -324,7 +317,6 @@
       line-height: 1.7;
     }
 
-    /* White space bar */
     .ws-bar-bg {
       height: 12px;
       background: var(--bg3);
@@ -333,10 +325,7 @@
       overflow: hidden;
     }
 
-    .ws-bar-fill {
-      height: 100%;
-      border-radius: 6px;
-    }
+    .ws-bar-fill { height: 100%; border-radius: 6px; }
 
     .ws-labels {
       display: flex;
@@ -345,16 +334,145 @@
       color: var(--muted);
     }
 
-    /* Dashboard and explorer */
-    .placeholder {
-      color: var(--muted);
-      padding: 40px 0;
+    /* DASHBOARD */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
     }
+
+    .stat-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .stat-box .num {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .stat-box .lbl {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-box .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .dash-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .dash-card.wide { grid-column: 1 / -1; }
+
+    .dash-card h3 {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap.tall { height: 260px; }
+
+    /* EXPLORER */
+    .explorer-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .explorer-filters input,
+    .explorer-filters select {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      font-family: Arial, sans-serif;
+    }
+
+    .explorer-filters input { flex: 1; min-width: 200px; }
+
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    th {
+      background: var(--bg3);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .page-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+
+    .page-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: Arial, sans-serif;
+    }
+
+    .page-btn:hover { border-color: var(--purple); }
+    .page-info { font-size: 13px; color: var(--muted); }
 
   </style>
 </head>
 <body>
 
+  <!-- NAV -->
   <nav>
     <div class="logo">Patent<span>Screener</span></div>
     <div class="nav-tabs">
@@ -366,7 +484,6 @@
 
   <!-- SCREENER -->
   <div id="tab-screener" class="section active">
-
     <div class="hero">
       <h1>Patent Intelligence<br>for <em>AI-Oncology</em></h1>
       <p>Analyse your innovation against 500 coded patents. Get Section 3 risk, prior art, and filing advice.</p>
@@ -393,17 +510,14 @@
     <div class="form-box">
       <h2>Describe your invention</h2>
       <p>Enter details to receive a preliminary patentability assessment under Indian Patent Law.</p>
-
       <div class="form-grid">
         <div class="form-group form-full">
           <label>Invention title</label>
-          <input type="text" id="inv-title"
-            placeholder="e.g. Deep learning model for lung cancer detection from CT scans">
+          <input type="text" id="inv-title" placeholder="e.g. Deep learning model for lung cancer detection from CT scans">
         </div>
         <div class="form-group form-full">
           <label>Brief description</label>
-          <textarea id="inv-desc"
-            placeholder="Describe what your invention does, the AI technique, and clinical application..."></textarea>
+          <textarea id="inv-desc" placeholder="Describe what your invention does, the AI technique, and clinical application..."></textarea>
         </div>
         <div class="form-group">
           <label>Primary AI technique</label>
@@ -456,31 +570,137 @@
           </select>
         </div>
       </div>
-
-      <button class="btn-analyse" onclick="runScreener()">
-        Analyse Patentability →
-      </button>
+      <button class="btn-analyse" onclick="runScreener()">Analyse Patentability →</button>
     </div>
 
     <div id="results"></div>
-
   </div>
 
   <!-- DASHBOARD -->
   <div id="tab-dashboard" class="section">
-    <h2 style="color:var(--purple); margin-bottom:12px;">Dashboard</h2>
-    <p class="placeholder">Charts coming in next step.</p>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="num" style="color:var(--purple)">2,834</div>
+        <div class="lbl">Total Patents</div>
+        <div class="sub">2018 — 2026</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" style="color:var(--red)">0%</div>
+        <div class="lbl">India Grant Rate</div>
+        <div class="sub">392 filed, 0 granted</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" style="color:var(--green)">48%</div>
+        <div class="lbl">Korea Grant Rate</div>
+        <div class="sub">Best in dataset</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" style="color:var(--yellow)">58%</div>
+        <div class="lbl">High S.3(k) Risk</div>
+        <div class="sub">290 of 500 coded</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card wide">
+        <h3>Patent filing growth 2018–2026</h3>
+        <div class="chart-wrap">
+          <canvas id="c-trend"></canvas>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>Grant rate by country</h3>
+        <div class="chart-wrap">
+          <canvas id="c-grants"></canvas>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>AI technique distribution</h3>
+        <div class="chart-wrap">
+          <canvas id="c-ai"></canvas>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>Section 3(k) risk distribution</h3>
+        <div class="chart-wrap">
+          <canvas id="c-risk"></canvas>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>Top cancer types</h3>
+        <div class="chart-wrap tall">
+          <canvas id="c-cancer"></canvas>
+        </div>
+      </div>
+      <div class="dash-card">
+        <h3>Application category breakdown</h3>
+        <div class="chart-wrap">
+          <canvas id="c-cat"></canvas>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- EXPLORER -->
   <div id="tab-explorer" class="section">
-    <h2 style="color:var(--purple); margin-bottom:12px;">Patent Explorer</h2>
-    <p class="placeholder">Search table coming in next step.</p>
+    <div class="explorer-filters">
+      <input type="text" id="search-q" placeholder="Search patents by title..." oninput="filterTable()">
+      <select id="f-ai" onchange="filterTable()">
+        <option value="">All AI Techniques</option>
+        <option>Machine Learning</option>
+        <option>Deep Learning</option>
+        <option>Bioinformatics ML</option>
+        <option>AI/ML (unspecified)</option>
+        <option>Ensemble ML</option>
+      </select>
+      <select id="f-cancer" onchange="filterTable()">
+        <option value="">All Cancer Types</option>
+        <option>Breast</option>
+        <option>Lung</option>
+        <option>Prostate</option>
+        <option>Colorectal</option>
+        <option>Gastric</option>
+        <option>Liver</option>
+        <option>Ovarian</option>
+        <option>Cervical</option>
+        <option>General/Multiple</option>
+      </select>
+      <select id="f-risk" onchange="filterTable()">
+        <option value="">All Risk Levels</option>
+        <option value="High">High S.3(k)</option>
+        <option value="Moderate">Moderate S.3(k)</option>
+        <option value="Low">Low S.3(k)</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>AI Technique</th>
+            <th>Cancer Type</th>
+            <th>Country</th>
+            <th>Year</th>
+            <th>S.3(k) Risk</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody id="patent-table"></tbody>
+      </table>
+    </div>
+
+    <div class="page-controls">
+      <button class="page-btn" onclick="changePage(-1)">← Previous</button>
+      <span class="page-info" id="page-info"></span>
+      <button class="page-btn" onclick="changePage(1)">Next →</button>
+    </div>
   </div>
 
   <script>
 
-    // ── YOUR PATENT DATA (from Excel) ──────────────────────────────
+    // ── PATENT DATA (from your Excel research) ───────────────────
     var PATENTS = [
       { title:"CANCER CLASSIFIER MODELS, MACHINE LEARNING SYSTEMS AND METHODS OF USE", pub_no:"US2020005901A1", year:2018, country:"US", ai_tech:"Machine Learning", category:"Diagnostic", cancer_type:"General/Multiple", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
       { title:"DEEP LEARNING SYSTEM FOR LUNG CANCER NODULE DETECTION", pub_no:"KR20240089234A", year:2022, country:"KR", ai_tech:"Deep Learning", category:"Diagnostic", cancer_type:"Lung", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" },
@@ -509,8 +729,21 @@
       { title:"DEEP LEARNING DETECTION OF PROSTATE CANCER FROM MRI IMAGES", pub_no:"US2024078901A1", year:2023, country:"US", ai_tech:"Deep Learning", category:"Imaging", cancer_type:"Prostate", risk_3k:"High", risk_3i:"Low", risk_3c:"Low" }
     ];
 
-    // ── TAB SWITCHING ─────────────────────────────────────────────
-    function showTab(name, clickedButton) {
+    // ── CHART DATA (from your Excel research) ───────────────────
+    var YEAR_DATA = [
+      {year:2018,count:129},{year:2019,count:164},{year:2020,count:245},
+      {year:2021,count:301},{year:2022,count:372},{year:2023,count:439},
+      {year:2024,count:458},{year:2025,count:422}
+    ];
+
+    var GRANT_DATA = {
+      labels: ['Korea','Australia','US','China','Europe','Japan','PCT','India'],
+      values: [48, 42.1, 34.4, 15.6, 13.2, 3.4, 2.2, 0],
+      colors: ['#6bcb77','#6bcb77','#6bcb77','#ffd93d','#ffd93d','#ff8c42','#ff8c42','#ff6b6b']
+    };
+
+    // ── TAB SWITCHING ────────────────────────────────────────────
+    function showTab(name, btn) {
       document.querySelectorAll('.section').forEach(function(s) {
         s.classList.remove('active');
       });
@@ -518,267 +751,382 @@
         t.classList.remove('active');
       });
       document.getElementById('tab-' + name).classList.add('active');
-      clickedButton.classList.add('active');
+      btn.classList.add('active');
+      if (name === 'dashboard') initCharts();
+      if (name === 'explorer')  renderTable();
     }
 
-    // ── RISK ALGORITHM: SECTION 3(k) ─────────────────────────────
-    // Scores how "algorithmic" the invention is
-    // Higher score = more likely to be rejected under S.3(k)
+    // ── RISK ALGORITHMS ──────────────────────────────────────────
     function predictRisk3k(ai, cat, text) {
       var t = text.toLowerCase();
       var score = 0;
-
-      // Deep Learning and ML are directly algorithmic
       if (ai === 'Deep Learning' || ai === 'Machine Learning') score += 3;
-
-      // Bioinformatics ML is partly algorithmic
       if (ai === 'Bioinformatics ML') score += 1;
-
-      // Platform/Diagnostic = software-heavy categories
       if (cat === 'Platform/Infrastructure') score += 2;
       if (cat === 'Diagnostic') score += 2;
-
-      // Algorithm words in description = more exposure
       if (t.includes('algorithm') || t.includes('neural') ||
           t.includes('model') || t.includes('classifier')) score += 2;
-
-      // Physical hardware words REDUCE risk
-      // (technical effect = defence against S.3k)
       if (t.includes('system') || t.includes('device') ||
           t.includes('apparatus')) score -= 1;
-
-      // Return risk level based on total score
       if (score >= 5) return 'High';
       if (score >= 3) return 'Moderate';
       return 'Low';
     }
 
-    // ── RISK ALGORITHM: SECTION 3(i) ─────────────────────────────
-    // Targets treatment/therapy methods on human body
     function predictRisk3i(cat) {
       if (cat === 'Drug Response/Therapeutic') return 'Moderate';
       return 'Low';
     }
 
-    // ── RISK ALGORITHM: SECTION 3(c) ─────────────────────────────
-    // Targets natural discoveries — genomic/biological inventions
     function predictRisk3c(ai, text) {
       var t = text.toLowerCase();
-
-      // Bioinformatics + genomic words = natural correlation risk
       if (ai === 'Bioinformatics ML' &&
          (t.includes('genomic') || t.includes('biomarker') ||
-          t.includes('gene')    || t.includes('sequence'))) {
-        return 'High';
-      }
-
-      // General natural/discovery language
+          t.includes('gene') || t.includes('sequence'))) return 'High';
       if (t.includes('natural') || t.includes('discovery') ||
-          t.includes('dna')) {
-        return 'Moderate';
-      }
-
+          t.includes('dna')) return 'Moderate';
       return 'Low';
     }
 
-    // ── PRIOR ART MATCHING ────────────────────────────────────────
-    // Scores every patent against the user's invention
-    // Returns top 4 closest matches
+    // ── PRIOR ART MATCHING ───────────────────────────────────────
     function findPriorArt(ai, cancer, cat, title) {
       var t = (title || '').toLowerCase();
-
       var scored = PATENTS.map(function(p) {
         var score = 0;
-
-        // Same AI technique = strong match
         if (p.ai_tech === ai) score += 3;
-
-        // Same cancer type = strong match
         if (p.cancer_type === cancer) score += 3;
-
-        // Same category = good match
         if (p.category === cat) score += 2;
-
-        // Keyword overlap in title
-        var words = t.split(' ').filter(function(w) {
-          return w.length > 4;
-        });
-        words.forEach(function(word) {
-          if (p.title.toLowerCase().includes(word)) score += 1;
-        });
-
+        t.split(' ').filter(function(w) { return w.length > 4; })
+          .forEach(function(w) {
+            if (p.title.toLowerCase().includes(w)) score += 1;
+          });
         return { patent: p, score: score };
       });
-
-      // Sort highest score first, return top 4
-      scored.sort(function(a, b) { return b.score - a.score; });
-      return scored.slice(0, 4).map(function(s) { return s.patent; });
+      scored.sort(function(a,b) { return b.score - a.score; });
+      return scored.slice(0,4).map(function(s) { return s.patent; });
     }
 
-    // ── WHITE SPACE CALCULATION ───────────────────────────────────
-    // How many patents already exist in same innovation zone?
+    // ── WHITE SPACE ──────────────────────────────────────────────
     function calcWhiteSpace(ai, cancer, cat) {
       var matches = PATENTS.filter(function(p) {
-        return p.ai_tech === ai &&
-               p.cancer_type === cancer &&
-               p.category === cat;
+        return p.ai_tech === ai && p.cancer_type === cancer && p.category === cat;
       }).length;
-
-      if (matches === 0)  return { score: 95, label: 'Highly open',        color: '#6bcb77' };
-      if (matches <= 2)   return { score: 75, label: 'Mostly open',        color: '#6bcb77' };
-      if (matches <= 5)   return { score: 50, label: 'Moderately crowded', color: '#ffd93d' };
-      if (matches <= 10)  return { score: 25, label: 'Crowded',            color: '#ff8c42' };
-      return                     { score: 10, label: 'Highly saturated',   color: '#ff6b6b' };
+      if (matches === 0)  return { score:95, label:'Highly open',        color:'#6bcb77' };
+      if (matches <= 2)   return { score:75, label:'Mostly open',        color:'#6bcb77' };
+      if (matches <= 5)   return { score:50, label:'Moderately crowded', color:'#ffd93d' };
+      if (matches <= 10)  return { score:25, label:'Crowded',            color:'#ff8c42' };
+      return                     { score:10, label:'Highly saturated',   color:'#ff6b6b' };
     }
 
-    // ── MAIN FUNCTION — runs when Analyse is clicked ──────────────
+    // ── MAIN SCREENER ────────────────────────────────────────────
     function runScreener() {
+      var title  = document.getElementById('inv-title').value.trim();
+      var desc   = document.getElementById('inv-desc').value.trim();
+      var ai     = document.getElementById('inv-ai').value;
+      var cancer = document.getElementById('inv-cancer').value;
+      var cat    = document.getElementById('inv-cat').value;
 
-      // Step 1: Read all user inputs
-      var title    = document.getElementById('inv-title').value.trim();
-      var desc     = document.getElementById('inv-desc').value.trim();
-      var ai       = document.getElementById('inv-ai').value;
-      var cancer   = document.getElementById('inv-cancer').value;
-      var cat      = document.getElementById('inv-cat').value;
+      if (!title) { alert('Please enter an invention title.'); return; }
 
-      // Step 2: Validate — at least title needed
-      if (!title) {
-        alert('Please enter an invention title.');
-        return;
-      }
+      var full = title + ' ' + desc;
+      var r3k  = predictRisk3k(ai, cat, full);
+      var r3i  = predictRisk3i(cat);
+      var r3c  = predictRisk3c(ai, full);
+      var pa   = findPriorArt(ai, cancer, cat, title);
+      var ws   = calcWhiteSpace(ai, cancer, cat);
 
-      var fullText = title + ' ' + desc;
+      var html = '';
 
-      // Step 3: Run all algorithms
-      var risk3k   = predictRisk3k(ai, cat, fullText);
-      var risk3i   = predictRisk3i(cat);
-      var risk3c   = predictRisk3c(ai, fullText);
-      var priorArt = findPriorArt(ai, cancer, cat, title);
-      var ws       = calcWhiteSpace(ai, cancer, cat);
-
-      // Step 4: Build results HTML
-      var html = '<div class="results-box">';
-
-      // ── RISK CARDS ──
+      // Risk cards
       html += '<div class="risk-cards">';
-
-      html += '<div class="risk-card ' + risk3k + '">' +
-              '<div class="risk-label">Section 3(k) Risk</div>' +
-              '<div class="risk-val">' + risk3k + '</div>' +
-              '<div class="risk-sub">Algorithm exclusion</div>' +
-              '</div>';
-
-      html += '<div class="risk-card ' + risk3i + '">' +
-              '<div class="risk-label">Section 3(i) Risk</div>' +
-              '<div class="risk-val">' + risk3i + '</div>' +
-              '<div class="risk-sub">Treatment method</div>' +
-              '</div>';
-
-      html += '<div class="risk-card ' + risk3c + '">' +
-              '<div class="risk-label">Section 3(c) Risk</div>' +
-              '<div class="risk-val">' + risk3c + '</div>' +
-              '<div class="risk-sub">Natural discovery</div>' +
-              '</div>';
-
+      [[r3k,'Section 3(k)','Algorithm exclusion'],
+       [r3i,'Section 3(i)','Treatment method'],
+       [r3c,'Section 3(c)','Natural discovery']].forEach(function(r) {
+        html += '<div class="risk-card ' + r[0] + '">' +
+                '<div class="risk-label">' + r[1] + ' Risk</div>' +
+                '<div class="risk-val">' + r[0] + '</div>' +
+                '<div class="risk-sub">' + r[2] + '</div></div>';
+      });
       html += '</div>';
 
-      // ── AI EXPLANATION ──
-      var explanation = '';
-
-      if (risk3k === 'High') {
-        explanation += '<strong>Section 3(k) is the main barrier.</strong> Your invention uses ' +
-          (ai || 'AI/ML') + ' which Indian patent law may classify as a computer programme per se. ' +
-          'To overcome this, frame claims around the technical system and measurable clinical outcome — not the algorithm. ';
-      } else if (risk3k === 'Moderate') {
-        explanation += 'Section 3(k) risk is moderate. Framing claims around the technical effect on patient outcomes may overcome this. ';
+      // Analysis
+      var exp = '';
+      if (r3k === 'High') {
+        exp += '<strong>Section 3(k) is the main barrier.</strong> Your ' + (ai||'AI') +
+               ' invention may be classified as a computer programme per se. ' +
+               'Frame claims around the technical system and clinical outcome — not the algorithm. ';
+      } else if (r3k === 'Moderate') {
+        exp += 'Section 3(k) risk is moderate. Framing claims around measurable technical effect may overcome this. ';
       } else {
-        explanation += 'Section 3(k) risk is low for this invention type. ';
+        exp += 'Section 3(k) risk is low for this invention type. ';
       }
-
-      if (risk3c === 'High') {
-        explanation += '<strong>Section 3(c) is also a concern.</strong> Genomic or biomarker inventions risk being classified as natural phenomenon discoveries. ';
+      if (r3c === 'High') {
+        exp += '<strong>Section 3(c) is also a concern</strong> — genomic inventions risk natural phenomenon classification. ';
       }
-
-      explanation += '<br><br><strong>Recommendation:</strong> ';
-      if (risk3k === 'High') {
-        explanation += 'File PCT first to establish global priority. Pursue grants in Korea (48%) or US (34%) before India. If filing in India, restructure claims to emphasise the technical system, not the algorithm.';
+      exp += '<br><br><strong>Recommendation:</strong> ';
+      if (r3k === 'High') {
+        exp += 'File PCT first for global priority. Pursue grants in Korea (48%) or US (34%) before India. Restructure claims to emphasise technical system over algorithm.';
       } else {
-        explanation += 'This invention has a viable path to Indian patent protection. Emphasise technical implementation and clinical utility in claims.';
+        exp += 'This invention has a viable path to Indian patent protection. Emphasise technical implementation and clinical utility.';
       }
 
-      html += '<div class="result-section">' +
-              '<h3>Analysis</h3>' +
-              '<div class="ai-box">' + explanation + '</div>' +
-              '</div>';
+      html += '<div class="result-section"><h3>Analysis</h3>' +
+              '<div class="ai-box">' + exp + '</div></div>';
 
-      // ── PRIOR ART ──
+      // Prior art
       html += '<div class="result-section"><h3>Closest Prior Art</h3>';
-
-      priorArt.forEach(function(p) {
-        var riskClass = p.risk_3k === 'High' ? 'tag-h' :
-                        p.risk_3k === 'Moderate' ? 'tag-m' : 'tag-l';
-
-        html += '<div class="pa-item">' +
-                '<div class="pa-title">' + p.title + '</div>' +
+      pa.forEach(function(p) {
+        var rc = p.risk_3k === 'High' ? 'tag-h' : p.risk_3k === 'Moderate' ? 'tag-m' : 'tag-l';
+        html += '<div class="pa-item"><div class="pa-title">' + p.title + '</div>' +
                 '<div class="pa-tags">' +
                 '<span class="tag">' + p.pub_no + '</span>' +
                 '<span class="tag">' + p.country + ' · ' + p.year + '</span>' +
                 '<span class="tag">' + p.ai_tech + '</span>' +
                 '<span class="tag">' + p.cancer_type + '</span>' +
-                '<span class="tag ' + riskClass + '">S.3(k): ' + p.risk_3k + '</span>' +
+                '<span class="tag ' + rc + '">S.3(k): ' + p.risk_3k + '</span>' +
                 '</div></div>';
       });
-
       html += '</div>';
 
-      // ── WHITE SPACE ──
-      html += '<div class="result-section"><h3>Innovation White Space</h3>';
-      html += '<p style="font-size:13px; color:var(--muted); margin-bottom:8px;">' +
-              'Innovation zone: <strong style="color:var(--text)">' + (ai||'—') + ' × ' +
-              (cancer||'—') + ' × ' + (cat||'—') + '</strong>' +
-              ' — <strong style="color:' + ws.color + '">' + ws.label + '</strong></p>';
-      html += '<div class="ws-bar-bg"><div class="ws-bar-fill" style="width:' +
-              ws.score + '%; background:' + ws.color + '"></div></div>';
-      html += '<div class="ws-labels"><span>Saturated</span>' +
-              '<span style="color:' + ws.color + '; font-weight:700">' +
-              ws.score + '% open</span><span>Open</span></div>';
-      html += '</div>';
+      // White space
+      html += '<div class="result-section"><h3>Innovation White Space</h3>' +
+              '<p style="font-size:13px;color:var(--muted);margin-bottom:8px;">' +
+              'Zone: <strong style="color:var(--text)">' + (ai||'—') + ' × ' +
+              (cancer||'—') + ' × ' + (cat||'—') + '</strong> — ' +
+              '<strong style="color:' + ws.color + '">' + ws.label + '</strong></p>' +
+              '<div class="ws-bar-bg"><div class="ws-bar-fill" style="width:' +
+              ws.score + '%;background:' + ws.color + '"></div></div>' +
+              '<div class="ws-labels"><span>Saturated</span>' +
+              '<span style="color:' + ws.color + ';font-weight:700">' + ws.score + '% open</span>' +
+              '<span>Open</span></div></div>';
 
-      // ── JURISDICTION ──
-      var jurisdictions = [
-        { name:'South Korea', rate:'48%',  cls:'rate-good', note:'Highest grant rate', rec: true },
-        { name:'United States', rate:'34%', cls:'rate-good', note:'Strong AI ecosystem',  rec: risk3k !== 'Low' },
-        { name:'PCT / WIPO',  rate:'2.2%', cls:'rate-mid',  note:'Global priority first', rec: risk3k === 'High' },
-        { name:'Europe (EPO)', rate:'13%', cls:'rate-mid',  note:'Technical effect standard', rec: false },
-        { name:'China',       rate:'15.6%',cls:'rate-mid',  note:'High volume market',    rec: false },
-        { name:'India',       rate:'0%',   cls:'rate-bad',  note:'392 filed, 0 granted',  rec: false }
+      // Jurisdiction
+      var juris = [
+        {name:'South Korea', rate:'48%',  cls:'rate-good', note:'Highest grant rate', rec:true},
+        {name:'United States',rate:'34%', cls:'rate-good', note:'Strong AI ecosystem', rec:r3k!=='Low'},
+        {name:'PCT / WIPO',  rate:'2.2%', cls:'rate-mid',  note:'Global priority',    rec:r3k==='High'},
+        {name:'Europe (EPO)',rate:'13%',  cls:'rate-mid',  note:'Technical effect',    rec:false},
+        {name:'China',       rate:'15.6%',cls:'rate-mid',  note:'High volume market',  rec:false},
+        {name:'India',       rate:'0%',   cls:'rate-bad',  note:'392 filed, 0 granted',rec:false}
       ];
 
-      html += '<div class="result-section"><h3>Jurisdiction Recommendation</h3>';
-      html += '<div class="juris-grid">';
-
-      jurisdictions.forEach(function(j) {
-        html += '<div class="juris-card ' + (j.rec ? 'recommended' : '') + '">' +
+      html += '<div class="result-section"><h3>Jurisdiction Recommendation</h3>' +
+              '<div class="juris-grid">';
+      juris.forEach(function(j) {
+        html += '<div class="juris-card ' + (j.rec?'recommended':'') + '">' +
                 '<div class="juris-name">' + j.name + '</div>' +
                 '<div class="juris-rate ' + j.cls + '">' + j.rate + '</div>' +
                 '<div class="juris-note">' + j.note + '</div>' +
                 (j.rec ? '<span class="rec-badge">Recommended</span>' : '') +
                 '</div>';
       });
-
       html += '</div></div>';
-      html += '</div>';
 
-      // Step 5: Write everything to the page
       document.getElementById('results').innerHTML = html;
+      document.getElementById('results').scrollIntoView({behavior:'smooth'});
+    }
 
-      // Step 6: Scroll down to results
-      document.getElementById('results').scrollIntoView({
-        behavior: 'smooth', block: 'start'
+    // ── CHARTS ───────────────────────────────────────────────────
+    var chartsReady = false;
+
+    function initCharts() {
+      if (chartsReady) return;
+      chartsReady = true;
+
+      Chart.defaults.color = '#7a7a9a';
+
+      // Filing trend
+      new Chart(document.getElementById('c-trend'), {
+        type: 'line',
+        data: {
+          labels: YEAR_DATA.map(function(d) { return d.year; }),
+          datasets: [{
+            label: 'Patents filed',
+            data: YEAR_DATA.map(function(d) { return d.count; }),
+            borderColor: '#7c6ff7',
+            backgroundColor: 'rgba(124,111,247,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#7c6ff7',
+            pointRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+          }
+        }
+      });
+
+      // Grant rates
+      new Chart(document.getElementById('c-grants'), {
+        type: 'bar',
+        data: {
+          labels: GRANT_DATA.labels,
+          datasets: [{
+            data: GRANT_DATA.values,
+            backgroundColor: GRANT_DATA.colors,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              max: 60,
+              ticks: { callback: function(v) { return v + '%'; } }
+            }
+          }
+        }
+      });
+
+      // AI techniques doughnut
+      new Chart(document.getElementById('c-ai'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Machine Learning','AI/ML (unspec.)','Bioinformatics ML','Deep Learning','Ensemble ML'],
+          datasets: [{
+            data: [184, 123, 117, 73, 3],
+            backgroundColor: ['#7c6ff7','#4ecdc4','#ffd93d','#ff6b6b','#6bcb77'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 8, font: { size: 11 } } } }
+        }
+      });
+
+      // Risk doughnut
+      new Chart(document.getElementById('c-risk'), {
+        type: 'doughnut',
+        data: {
+          labels: ['High','Moderate','Low'],
+          datasets: [{
+            data: [290, 167, 43],
+            backgroundColor: ['#ff6b6b','#ffd93d','#6bcb77'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 8, font: { size: 11 } } } }
+        }
+      });
+
+      // Cancer types horizontal bar
+      new Chart(document.getElementById('c-cancer'), {
+        type: 'bar',
+        data: {
+          labels: ['General','Breast','Lung','Prostate','Colorectal','Gastric','Liver','Ovarian'],
+          datasets: [{
+            data: [272, 46, 40, 25, 21, 21, 15, 14],
+            backgroundColor: 'rgba(78,205,196,0.7)',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { grid: { display: false } }
+          }
+        }
+      });
+
+      // Category bar
+      new Chart(document.getElementById('c-cat'), {
+        type: 'bar',
+        data: {
+          labels: ['Diagnostic','Platform','Other','Risk Pred.','Genomic','Prognostic'],
+          datasets: [{
+            data: [228, 60, 55, 48, 38, 34],
+            backgroundColor: 'rgba(255,217,61,0.7)',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+          }
+        }
       });
     }
 
-  </script>
+    // ── EXPLORER TABLE ───────────────────────────────────────────
+    var filtered = PATENTS.slice();
+    var currentPage = 0;
+    var perPage = 10;
 
+    function filterTable() {
+      var q       = document.getElementById('search-q').value.toLowerCase();
+      var ai      = document.getElementById('f-ai').value;
+      var cancer  = document.getElementById('f-cancer').value;
+      var risk    = document.getElementById('f-risk').value;
+
+      filtered = PATENTS.filter(function(p) {
+        return (!q      || p.title.toLowerCase().includes(q)) &&
+               (!ai     || p.ai_tech === ai)                  &&
+               (!cancer || p.cancer_type === cancer)          &&
+               (!risk   || p.risk_3k === risk);
+      });
+
+      currentPage = 0;
+      renderTable();
+    }
+
+    function renderTable() {
+      var start = currentPage * perPage;
+      var rows  = filtered.slice(start, start + perPage);
+
+      var html = rows.map(function(p) {
+        var rc = p.risk_3k === 'High' ? 'tag-h' : p.risk_3k === 'Moderate' ? 'tag-m' : 'tag-l';
+        return '<tr>' +
+               '<td style="max-width:260px;font-size:12px">' + p.title + '</td>' +
+               '<td>' + p.ai_tech + '</td>' +
+               '<td>' + p.cancer_type + '</td>' +
+               '<td>' + p.country + '</td>' +
+               '<td>' + p.year + '</td>' +
+               '<td><span class="tag ' + rc + '">' + p.risk_3k + '</span></td>' +
+               '<td style="font-size:12px">' + p.category + '</td>' +
+               '</tr>';
+      }).join('');
+
+      document.getElementById('patent-table').innerHTML = html;
+
+      var total = filtered.length;
+      var from  = total === 0 ? 0 : start + 1;
+      var to    = Math.min(start + perPage, total);
+      document.getElementById('page-info').textContent =
+        from + '–' + to + ' of ' + total + ' patents';
+    }
+
+    function changePage(dir) {
+      var maxPage = Math.ceil(filtered.length / perPage) - 1;
+      currentPage = Math.max(0, Math.min(maxPage, currentPage + dir));
+      renderTable();
+    }
+
+    // Load explorer table on first visit
+    renderTable();
+
+  </script>
 </body>
 </html>
