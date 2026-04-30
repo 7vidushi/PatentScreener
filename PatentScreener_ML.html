@@ -1,1 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PatentScreener ML</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #607086;
+      --line: #d9e0e8;
+      --paper: #f7f9fb;
+      --panel: #ffffff;
+      --teal: #0f766e;
+      --teal-dark: #115e59;
+      --amber: #c77700;
+      --red: #c2413b;
+      --green: #16803c;
+      --shadow: 0 16px 40px rgba(23, 33, 43, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    .topbar {
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0;
+      font-size: 20px;
+    }
+
+    .status {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .status.ready { color: var(--green); border-color: rgba(22, 128, 60, 0.25); }
+    .status.error { color: var(--red); border-color: rgba(194, 65, 59, 0.25); }
+
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 30px 22px 56px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--teal);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .hero p:last-child {
+      margin: 14px 0 0;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      font-size: 14px;
+      margin: 16px 0 7px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      padding: 12px 13px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.13);
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--teal);
+      color: #fff;
+    }
+
+    .primary:hover { background: var(--teal-dark); }
+
+    .secondary {
+      background: #e9eef3;
+      color: var(--ink);
+    }
+
+    .summary {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfcfd;
+      margin-bottom: 16px;
+    }
+
+    .overall {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .overall strong {
+      font-size: 24px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-weight: 800;
+      font-size: 13px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .risk-low { color: var(--green); background: rgba(22, 128, 60, 0.09); border-color: rgba(22, 128, 60, 0.22); }
+    .risk-moderate { color: var(--amber); background: rgba(199, 119, 0, 0.1); border-color: rgba(199, 119, 0, 0.25); }
+    .risk-high { color: var(--red); background: rgba(194, 65, 59, 0.1); border-color: rgba(194, 65, 59, 0.24); }
+
+    .risk-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    .risk-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .risk-head h3 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .risk-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 80px minmax(0, 1fr) 52px;
+      gap: 10px;
+      align-items: center;
+      margin: 9px 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: #e8edf2;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: 999px;
+      width: 0%;
+    }
+
+    .fill.Low { background: var(--green); }
+    .fill.Moderate { background: var(--amber); }
+    .fill.High { background: var(--red); }
+
+    .guidance {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .empty {
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 30px;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .meta,
+      .grid-two {
+        grid-template-columns: 1fr;
+      }
+
+      .overall {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="nav">
+      <div class="brand">PatentScreener ML</div>
+      <div id="modelStatus" class="status">Loading model...</div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">AI-oncology patent intelligence</p>
+        <h1>Machine learning risk screen for Indian Patent Act Section 3</h1>
+        <p>Client-side ML classifier for preliminary 3(k), 3(i), and 3(c) risk assessment using the curated patent landscape dataset.</p>
+      </div>
+      <div class="meta">
+        <div class="metric">
+          <strong>3</strong>
+          <span>Section risk models</span>
+        </div>
+        <div class="metric">
+          <strong>Browser</strong>
+          <span>No backend required</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <form id="predictForm" class="panel">
+        <h2>Invention Details</h2>
+
+        <label for="title">Invention title</label>
+        <input id="title" name="title" autocomplete="off" required />
+
+        <label for="abstract">Abstract or description</label>
+        <textarea id="abstract" name="abstract" required></textarea>
+
+        <div class="grid-two">
+          <div>
+            <label for="aiTechnique">AI technique</label>
+            <select id="aiTechnique" name="aiTechnique">
+              <option>Deep Learning</option>
+              <option>Machine Learning</option>
+              <option>AI/ML (unspecified)</option>
+              <option>Bioinformatics ML</option>
+              <option>Radiomics</option>
+              <option>Computer Vision</option>
+              <option>Natural Language Processing</option>
+              <option>Ensemble ML</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="cancerType">Cancer type</label>
+            <select id="cancerType" name="cancerType">
+              <option>General/Multiple</option>
+              <option>Breast</option>
+              <option>Lung</option>
+              <option>Prostate</option>
+              <option>Colorectal</option>
+              <option>Brain</option>
+              <option>Skin</option>
+              <option>Ovarian</option>
+              <option>Liver</option>
+              <option>Pancreatic</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-two">
+          <div>
+            <label for="domain">Application domain</label>
+            <select id="domain" name="domain">
+              <option>Diagnostic</option>
+              <option>Imaging</option>
+              <option>Prognostic</option>
+              <option>Therapeutic</option>
+              <option>Genomics</option>
+              <option>Drug Discovery</option>
+              <option>Screening</option>
+              <option>Other/Mixed</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="ipc">IPC code</label>
+            <input id="ipc" name="ipc" placeholder="G06N20/00" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" type="submit">Analyze Patentability</button>
+          <button class="secondary" type="button" id="exampleBtn">Load Example</button>
+          <button class="secondary" type="reset">Clear</button>
+        </div>
+
+        <p class="footer-note">Preliminary research prototype. Not legal advice.</p>
+      </form>
+
+      <section class="panel">
+        <h2>ML Risk Output</h2>
+        <div id="results" class="empty">
+          Enter invention details and run the classifier.
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    let MODELS = null;
+
+    const statusEl = document.getElementById("modelStatus");
+    const resultsEl = document.getElementById("results");
+    const form = document.getElementById("predictForm");
+
+    const sectionInfo = {
+      "3k": {
+        title: "Section 3(k)",
+        subtitle: "Algorithm / software patentability risk"
+      },
+      "3i": {
+        title: "Section 3(i)",
+        subtitle: "Medical treatment or diagnostic method risk"
+      },
+      "3c": {
+        title: "Section 3(c)",
+        subtitle: "Discovery or natural phenomenon risk"
+      }
+    };
+
+    const riskOrder = ["Low", "Moderate", "High"];
+    const riskRank = { Low: 1, Moderate: 2, High: 3 };
+
+    async function loadModels() {
+      try {
+        const response = await fetch("patent_screener_models.json", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Could not load patent_screener_models.json");
+        }
+        MODELS = await response.json();
+        statusEl.textContent = "Model loaded";
+        statusEl.className = "status ready";
+      } catch (error) {
+        statusEl.textContent = "Model file not found";
+        statusEl.className = "status error";
+        resultsEl.className = "empty";
+        resultsEl.textContent = "Upload patent_screener_models.json to the same GitHub folder as this HTML file.";
+      }
+    }
+
+    function tokenize(text) {
+      const matches = String(text).toLowerCase().match(/[a-z0-9_]+/g) || [];
+      return matches.filter(token => token.length >= 2);
+    }
+
+    function buildTerms(text) {
+      const tokens = tokenize(text);
+      const terms = [...tokens];
+
+      for (let i = 0; i < tokens.length - 1; i++) {
+        terms.push(tokens[i] + " " + tokens[i + 1]);
+      }
+
+      return terms;
+    }
+
+    function vectorize(text, model) {
+      const counts = new Map();
+      const terms = buildTerms(text);
+      const vocab = model.vocabulary;
+
+      for (const term of terms) {
+        const index = vocab[term];
+        if (index !== undefined) {
+          counts.set(index, (counts.get(index) || 0) + 1);
+        }
+      }
+
+      let norm = 0;
+      const values = new Map();
+
+      for (const [index, count] of counts.entries()) {
+        const weighted = count * model.idf[index];
+        values.set(index, weighted);
+        norm += weighted * weighted;
+      }
+
+      norm = Math.sqrt(norm);
+
+      if (norm > 0) {
+        for (const [index, value] of values.entries()) {
+          values.set(index, value / norm);
+        }
+      }
+
+      return values;
+    }
+
+    function softmax(scores) {
+      const maxScore = Math.max(...scores);
+      const exps = scores.map(score => Math.exp(score - maxScore));
+      const total = exps.reduce((sum, value) => sum + value, 0);
+      return exps.map(value => value / total);
+    }
+
+    function predictWithModel(text, model) {
+      const vector = vectorize(text, model);
+      const classes = model.classes;
+
+      if (classes.length === 2 && model.coef.length === 1) {
+        let score = model.intercept[0];
+
+        for (const [index, value] of vector.entries()) {
+          score += model.coef[0][index] * value;
+        }
+
+        const p1 = 1 / (1 + Math.exp(-score));
+        const probabilities = [1 - p1, p1];
+        const bestIndex = probabilities[1] >= probabilities[0] ? 1 : 0;
+
+        return {
+          prediction: classes[bestIndex],
+          probabilities: Object.fromEntries(classes.map((label, i) => [label, probabilities[i]]))
+        };
+      }
+
+      const scores = classes.map((_, classIndex) => {
+        let score = model.intercept[classIndex];
+
+        for (const [index, value] of vector.entries()) {
+          score += model.coef[classIndex][index] * value;
+        }
+
+        return score;
+      });
+
+      const probabilities = softmax(scores);
+      let bestIndex = 0;
+
+      for (let i = 1; i < probabilities.length; i++) {
+        if (probabilities[i] > probabilities[bestIndex]) bestIndex = i;
+      }
+
+      return {
+        prediction: classes[bestIndex],
+        probabilities: Object.fromEntries(classes.map((label, i) => [label, probabilities[i]]))
+      };
+    }
+
+    function makeInputText(data) {
+      return [
+        "Title: " + data.title,
+        "Abstract: " + data.abstract,
+        "AI Technique: " + data.aiTechnique,
+        "Cancer Type: " + data.cancerType,
+        "Application Domain: " + data.domain,
+        "IPC: " + data.ipc
+      ].join(" ");
+    }
+
+    function predictAll(data) {
+      const text = makeInputText(data);
+
+      return {
+        "3k": predictWithModel(text, MODELS["3k"]),
+        "3i": predictWithModel(text, MODELS["3i"]),
+        "3c": predictWithModel(text, MODELS["3c"])
+      };
+    }
+
+    function percent(value) {
+      return Math.round((value || 0) * 100);
+    }
+
+    function riskClass(label) {
+      return "risk-" + String(label).toLowerCase();
+    }
+
+    function overallRisk(results) {
+      let best = "Low";
+
+      for (const key of Object.keys(results)) {
+        const prediction = results[key].prediction;
+        if (riskRank[prediction] > riskRank[best]) best = prediction;
+      }
+
+      return best;
+    }
+
+    function guidance(results) {
+      const lines = [];
+
+      if (results["3k"].prediction === "High") {
+        lines.push("For 3(k), strengthen technical effect, implementation details, and hardware or system-level contribution.");
+      } else if (results["3k"].prediction === "Moderate") {
+        lines.push("For 3(k), avoid presenting the invention as only an algorithm. Emphasize technical application and measurable output.");
+      }
+
+      if (riskRank[results["3i"].prediction] >= 2) {
+        lines.push("For 3(i), avoid claiming a method of treatment. Frame claims around a diagnostic system, device, or decision-support tool.");
+      }
+
+      if (riskRank[results["3c"].prediction] >= 2) {
+        lines.push("For 3(c), avoid claiming discovery of a biological fact alone. Emphasize the technical processing pipeline.");
+      }
+
+      if (!lines.length) {
+        lines.push("The screening result is relatively low risk, but claim wording and technical disclosure still matter.");
+      }
+
+      return lines.join(" ");
+    }
+
+    function renderResults(results) {
+      const overall = overallRisk(results);
+
+      const cards = Object.keys(results).map(section => {
+        const item = results[section];
+        const info = sectionInfo[section];
+
+        const bars = riskOrder.map(label => {
+          const value = item.probabilities[label] || 0;
+          return `
+            <div class="bar-row">
+              <div>${label}</div>
+              <div class="bar"><div class="fill ${label}" style="width:${percent(value)}%"></div></div>
+              <div>${percent(value)}%</div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <article class="risk-card">
+            <div class="risk-head">
+              <div>
+                <h3>${info.title}</h3>
+                <p>${info.subtitle}</p>
+              </div>
+              <span class="badge ${riskClass(item.prediction)}">${item.prediction}</span>
+            </div>
+            ${bars}
+          </article>
+        `;
+      }).join("");
+
+      resultsEl.className = "";
+      resultsEl.innerHTML = `
+        <div class="summary">
+          <div class="overall">
+            <div>
+              <strong>Overall ${overall} Risk</strong>
+              <div class="footer-note">Based on the highest predicted Section 3 risk.</div>
+            </div>
+            <span class="badge ${riskClass(overall)}">${overall}</span>
+          </div>
+          <div class="guidance">${guidance(results)}</div>
+        </div>
+        ${cards}
+      `;
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+
+      if (!MODELS) {
+        resultsEl.className = "empty";
+        resultsEl.textContent = "Model is still loading. Try again in a moment.";
+        return;
+      }
+
+      const data = {
+        title: document.getElementById("title").value,
+        abstract: document.getElementById("abstract").value,
+        aiTechnique: document.getElementById("aiTechnique").value,
+        cancerType: document.getElementById("cancerType").value,
+        domain: document.getElementById("domain").value,
+        ipc: document.getElementById("ipc").value
+      };
+
+      renderResults(predictAll(data));
+    });
+
+    document.getElementById("exampleBtn").addEventListener("click", () => {
+      document.getElementById("title").value = "Deep learning system for breast cancer detection";
+      document.getElementById("abstract").value = "A computer implemented method uses a convolutional neural network to detect malignant tumor regions in histopathology images and classify breast cancer tissue samples.";
+      document.getElementById("aiTechnique").value = "Deep Learning";
+      document.getElementById("cancerType").value = "Breast";
+      document.getElementById("domain").value = "Diagnostic";
+      document.getElementById("ipc").value = "G06N20/00";
+    });
+
+    loadModels();
+  </script>
+</body>
+</html>
 
